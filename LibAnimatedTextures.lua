@@ -62,19 +62,24 @@ end
 local Texture = ZO_Object:Subclass()
 LibAnimatedTextures.Texture = Texture
 
-function Texture:New(path, textures)
+function Texture:New(name, textures)
     -- Create
     local texture = ZO_Object.New(self)
     -- Attr
-    self.path = path or ""
+    self.name = name or ""
     self.textures = textures or {}
     self.fps = 24 -- Between 15 and 24, apparently
     self.enabled = true
     self.current_frame_index = nil
     -- Register textures (to fix the bug)
-    RedirectTexture(self.path, self.path)
+    RedirectTexture(self.name, self.name)
     for _, texture in ipairs(self.textures) do
         RedirectTexture(texture, texture)
+    end
+    -- If it's just 1 frame, set it and disable this emote
+    if #self.textures == 1 then
+        self:SetTexture(1)
+        self.enabled = false
     end
     -- Return
     return texture
@@ -91,19 +96,19 @@ function Texture:SetTexture(frame_index)
     -- Get frame
     local frame_path = self.textures[frame_index]
     -- Redirect texture
-    RedirectTexture(self.path, self.path)
-    RedirectTexture(self.path, frame_path)
+    RedirectTexture(self.name, self.name)
+    RedirectTexture(self.name, frame_path)
     LibAnimatedTextures.Debug(string.format(" -> %s", frame_path))
 end
 
 function Texture:Update()
     -- Check enabled
-    LibAnimatedTextures.Debug("%s %s", self.path, self.enabled and "enabled" or "disabled")
+    LibAnimatedTextures.Debug("%s %s", self.name, self.enabled and "enabled" or "disabled")
     if self.enabled ~= true then
         return
     end
     -- Debug
-    LibAnimatedTextures.Debug(string.format("Updating %s", self.path))
+    LibAnimatedTextures.Debug(string.format("Updating %s", self.name))
     -- Get raw frame time (1000 fps)
     local frame_time = GetFrameTimeMilliseconds()
     -- Frame time modifier per texture
@@ -165,6 +170,7 @@ end
 -- Values
 
 local texture_packs = {}
+LibAnimatedTextures.texture_packs = texture_packs
 local loop = nil
 local expand_window = true
 
@@ -175,8 +181,10 @@ function LibAnimatedTextures.UpdateChatWindow()
     local current_width = CHAT_SYSTEM.control:GetWidth()
     if expand_window == true then
         CHAT_SYSTEM.control:SetWidth(current_width+1)
+        expand_window = false
     else
         CHAT_SYSTEM.control:SetWidth(current_width-1)
+        expand_window = true
     end
 end
 
