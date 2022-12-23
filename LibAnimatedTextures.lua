@@ -28,8 +28,6 @@ LibAnimatedTextures.values = {
 }
 
 -- Debug
-
--- Debug
 function LibAnimatedTextures.Message(message, ...)
     if type(message) == type("") then
         -- Format
@@ -56,6 +54,8 @@ function LibAnimatedTextures.Debug(message, ...)
     LibAnimatedTextures.Message(message, ...)
 end
 
+-- Override
+
 -- Objects
 
 -- - Texture
@@ -66,20 +66,20 @@ function Texture:New(name, textures)
     -- Create
     local texture = ZO_Object.New(self)
     -- Attr
-    self.name = name or ""
-    self.textures = textures or {}
-    self.fps = 24 -- Between 15 and 24, apparently
-    self.enabled = true
-    self.current_frame_index = nil
+    texture.name = name or ""
+    texture.textures = textures
+    texture.fps = 24 -- Between 15 and 24, apparently
+    texture.enabled = true
+    texture.current_frame_index = nil
     -- Register textures (to fix the bug)
-    RedirectTexture(self.name, self.name)
-    for _, texture in ipairs(self.textures) do
+    RedirectTexture(texture.name, texture.name)
+    for _, texture in ipairs(texture.textures) do
         RedirectTexture(texture, texture)
     end
     -- If it's just 1 frame, set it and disable this emote
-    if #self.textures == 1 then
-        self:SetTexture(1)
-        self.enabled = false
+    texture:SetTexture(1)
+    if #texture.textures <= 1 then
+        texture.enabled = false
     end
     -- Return
     return texture
@@ -103,10 +103,10 @@ end
 
 function Texture:Update()
     -- Check enabled
-    LibAnimatedTextures.Debug("%s %s", self.name, self.enabled and "enabled" or "disabled")
     if self.enabled ~= true then
         return
     end
+    LibAnimatedTextures.Debug("Texture %s %s", self.name, self.enabled and "enabled" or "disabled")
     -- Debug
     LibAnimatedTextures.Debug(string.format("Updating %s", self.name))
     -- Get raw frame time (1000 fps)
@@ -129,9 +129,9 @@ function TexturePack:New(name, textures)
     -- Create
     local texture_pack = ZO_Object.New(self)
     -- Attr
-    self.name = name
-    self.enabled = true
-    self.textures = textures or {}
+    texture_pack.name = name
+    texture_pack.enabled = true
+    texture_pack.textures = textures or {}
     -- Return
     return texture_pack
 end
@@ -157,14 +157,16 @@ end
 
 function TexturePack:Update()
     -- Check enabled
-    LibAnimatedTextures.Debug("%s %s", self.name, self.enabled and "enabled" or "disabled")
+    LibAnimatedTextures.Debug("Texture pack %s %s", self.name, self.enabled and "enabled" or "disabled")
     if self.enabled ~= true then
         return
     end
     -- Update
+    LibAnimatedTextures.Debug("Updating %s", self.name)
     for texture_name, texture in pairs(self.textures) do
         texture:Update()
     end
+    LibAnimatedTextures.Debug("Updated %s", self.name)
 end
 
 -- Values
@@ -204,6 +206,7 @@ function LibAnimatedTextures.DeregisterTexturePack(texture_pack)
 end
 
 function LibAnimatedTextures.UpdateTexturePacks()
+    LibAnimatedTextures.Debug("Updating texture packs")
     -- Loop texturepacks
     for texture_pack_name, texture_pack in pairs(texture_packs) do
         texture_pack:Update()
@@ -234,6 +237,7 @@ end
 function LibAnimatedTextures.StartLoop()
     -- Check loop not started
     if loop ~= nil then return end
+    loop = true
     -- Start loop
     LibAnimatedTextures.Loop()
 end
