@@ -12,7 +12,8 @@ LibAnimatedTextures.default_saved_variables = {
     settings = {
         -- General
         enabled = false,
-        cooldown = 100,
+        cooldown = 1,
+        speed = 1,
         -- Debug
         debug_enabled = false,
     }
@@ -26,6 +27,21 @@ LibAnimatedTextures.values = {
         error = "|cFF0000",
     },
 }
+
+-- Helper
+
+local function filter(tbl, func)
+    -- Out
+    local list = {};
+    -- Loop
+    for i, v in ipairs(tbl) do
+      if func(v) then
+        table.insert(list, v)
+      end
+    end
+    -- Return
+    return list
+end
 
 -- Debug
 function LibAnimatedTextures.Message(message, ...)
@@ -62,39 +78,42 @@ end
 local Texture = ZO_Object:Subclass()
 LibAnimatedTextures.Texture = Texture
 
-function Texture:New(name, textures)
+function Texture:New(data)
     -- Create
     local texture = ZO_Object.New(self)
     -- Attr
-    texture.name = name or ""
-    texture.textures = textures
-    texture.fps = 24 -- Between 15 and 24, apparently
-    texture.enabled = true
-    texture.current_frame_index = nil
-    -- Register textures (to fix the bug)
+    texture.name = data.name or "<Anonymous Emote>"
+    texture.enabled = data.enabled or true
+    texture.frames = data.frames or {}
+    -- for _, frame in ipairs(data.frames) do table.insert(texture.frames, frame) end
+    texture.fps = data.fps or 24 -- Between 15 and 24, apparently
+    if (#texture.frames == 2) then
+        texture.fps = 4
+    end
+    texture.current_frame_index = data.current_frame_index or nil
+    -- Register virtual texture
     RedirectTexture(texture.name, texture.name)
-    for _, texture in ipairs(texture.textures) do
-        RedirectTexture(texture, texture)
+    -- Register real textures
+    for frame_index, frame in ipairs(texture.frames) do
+        RedirectTexture(frame, frame)
     end
-    -- If it's just 1 frame, set it and disable this emote
+    -- Set emote first frame
     texture:SetTexture(1)
-    if #texture.textures <= 1 then
-        texture.enabled = false
-    end
     -- Return
     return texture
 end
 
 function Texture:SetTexture(frame_index)
     -- Check valid frame
-    if not (0 < frame_index and frame_index <= #self.textures) then
+    if not ((0 < frame_index) and (frame_index <= #self.frames)) then
         return
     end
-    -- Check if same frame
+    -- Return if same frame
     if self.current_frame_index == frame_index then return end
+    -- Update frame index
     self.current_frame_index = frame_index
     -- Get frame
-    local frame_path = self.textures[frame_index]
+    local frame_path = self.frames[frame_index]
     -- Redirect texture
     RedirectTexture(self.name, self.name)
     RedirectTexture(self.name, frame_path)
@@ -106,18 +125,23 @@ function Texture:Update()
     if self.enabled ~= true then
         return
     end
-    LibAnimatedTextures.Debug("Texture %s %s", self.name, self.enabled and "enabled" or "disabled")
-    -- Debug
-    LibAnimatedTextures.Debug(string.format("Updating %s", self.name))
     -- Get raw frame time (1000 fps)
-    local frame_time = GetFrameTimeMilliseconds()
+    local frame_time = GetFrameTimeMilliseconds() * LibAnimatedTextures.saved_variables.settings.speed
     -- Frame time modifier per texture
     frame_time = (frame_time * self.fps) / 1000
     frame_time = math.floor(frame_time)
     -- Find which frame to be on (time mod texture count)
-    local frame_index = (frame_time % #self.textures) + 1
+    local frame_index = (frame_time % #self.frames) + 1
     -- Update texture
     self:SetTexture(frame_index)
+end
+
+function Texture:IsStatic()
+    return (#self.frames <= 1)
+end
+
+function Texture:IsAnimated()
+    return not (#self.frames <= 1)
 end
 
 -- - Texture Pack
@@ -125,48 +149,74 @@ end
 local TexturePack = ZO_Object:Subclass()
 LibAnimatedTextures.TexturePack = TexturePack
 
-function TexturePack:New(name, textures)
+function TexturePack:New(data)
     -- Create
     local texture_pack = ZO_Object.New(self)
     -- Attr
-    texture_pack.name = name
-    texture_pack.enabled = true
-    texture_pack.textures = textures or {}
+    texture_pack.name = data.name or "<Anonymous Texture Pack>"
+    texture_pack.enabled = data.enabled or true
+    texture_pack.static_textures = data.static_textures or {}
+    texture_pack.animated_textures = data.animated_textures or {}
     -- Return
     return texture_pack
 end
 
 function TexturePack:RegisterTexture(texture)
     -- Check not exist
-    if self.textures[texture.name] ~= nil then
+    if not (self.static_textures[texture.name] == nil and self.animated_textures[texture.name] == nil) then
         return
     end
-    -- Set texture
-    self.textures[texture.name] = texture
+    -- Categorise texture
+    if nil then
+    elseif texture:IsStatic() then
+        -- Static
+        self.static_textures[texture.name] = texture
+    elseif texture:IsAnimated() then
+        -- Animated
+        self.animated_textures[texture.name] = texture
+    else
+        -- Unknown
+        LibAnimatedTextures.Debug("Unknown texture type for %s", tostring(texture.name))
+    end
 end
 
 function TexturePack:DeregisterTexture(texture)
     -- Check does exist
-    if self.textures[texture.name] == nil then
+    if (self.static_textures[texture.name] == nil or self.animated_textures[texture.name] == nil) then
         return
     end
     -- Unset texture
-    ZO_ClearTable(self.textures[texture.name])
-    self.textures[texture.name] = nil
+    ZO_ClearTable(self.static_textures[texture.name] or {})
+    ZO_ClearTable(self.animated_textures[texture.name] or {})
+    -- Set nil
+    self.static_textures[texture.name] = nil
+    self.animated_textures[texture.name] = nil
 end
+
+function TexturePack:FromTextures(name, textures)
+    -- Filter
+    -- local static_textures = filter(textures, function (texture) return texture:IsStatic() end)
+    -- local animated_textures = filter(textures, function (texture) return texture:IsAnimated() end)
+    -- Create
+    local texture_pack = self:New({name = name})
+    -- Fill
+    for texture_index, texture in ipairs(textures) do
+        texture_pack:RegisterTexture(texture)
+    end
+    -- Return
+    return texture_pack
+end
+
 
 function TexturePack:Update()
     -- Check enabled
-    LibAnimatedTextures.Debug("Texture pack %s %s", self.name, self.enabled and "enabled" or "disabled")
     if self.enabled ~= true then
         return
     end
     -- Update
-    LibAnimatedTextures.Debug("Updating %s", self.name)
-    for texture_name, texture in pairs(self.textures) do
+    for texture_name, texture in pairs(self.animated_textures) do
         texture:Update()
     end
-    LibAnimatedTextures.Debug("Updated %s", self.name)
 end
 
 -- Values
@@ -206,7 +256,6 @@ function LibAnimatedTextures.DeregisterTexturePack(texture_pack)
 end
 
 function LibAnimatedTextures.UpdateTexturePacks()
-    LibAnimatedTextures.Debug("Updating texture packs")
     -- Loop texturepacks
     for texture_pack_name, texture_pack in pairs(texture_packs) do
         texture_pack:Update()
@@ -216,7 +265,6 @@ function LibAnimatedTextures.UpdateTexturePacks()
 end
 
 function LibAnimatedTextures.Loop()
-    LibAnimatedTextures.Debug("loop")
     -- Check enabled
     if LibAnimatedTextures.saved_variables.settings.enabled ~= true then
         -- Kill loop
@@ -235,6 +283,8 @@ function LibAnimatedTextures.Loop()
 end
 
 function LibAnimatedTextures.StartLoop()
+    -- Debug
+    LibAnimatedTextures.Debug("Starting loop %s")
     -- Check loop not started
     if loop ~= nil then return end
     loop = true
@@ -303,8 +353,19 @@ function LibAnimatedTextures.AddonMenu()
             setFunc = function(value) LibAnimatedTextures.saved_variables.settings.cooldown = value end,
             default = LibAnimatedTextures.default_saved_variables.settings.cooldown,
             min = 1,
-            max = 5000,
+            max = 1000,
             step = 1,
+        },
+        {
+            type = "slider",
+            name = "Speed",
+            getFunc = function() return LibAnimatedTextures.saved_variables.settings.speed end,
+            setFunc = function(value) LibAnimatedTextures.saved_variables.settings.speed = value end,
+            default = LibAnimatedTextures.default_saved_variables.settings.speed,
+            min = 0,
+            max = 5,
+            step = 0.01,
+            decimals=2
         },
         {
             type = "header",
