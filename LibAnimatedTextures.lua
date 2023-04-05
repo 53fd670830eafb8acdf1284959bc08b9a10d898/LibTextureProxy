@@ -82,15 +82,29 @@ function Texture:New(data)
     -- Create
     local texture = ZO_Object.New(self)
     -- Attr
-    texture.name = data.name or "<Anonymous Emote>"
-    texture.enabled = data.enabled or true
-    texture.frames = data.frames or {}
-    -- for _, frame in ipairs(data.frames) do table.insert(texture.frames, frame) end
-    texture.fps = data.fps or 24 -- Between 15 and 24, apparently
-    if (#texture.frames == 2) then
-        texture.fps = 4
+    texture.name = data.name
+    texture.enabled = data.enabled
+    texture.frames = data.frames
+    texture.fps = data.fps
+    texture.current_frame_index = data.current_frame_index
+    -- Return
+    return texture
+end
+
+
+function Texture:Create(data)
+    -- Attrs
+    data.name = data.name or "<Anonymous Emote>"
+    data.enabled = data.enabled or true
+    data.frames = data.frames or {}
+    -- FPS
+    data.fps = data.fps or 24 -- Between 15 and 24, apparently
+    if (#data.frames == 2) then
+        data.fps = 4
     end
-    texture.current_frame_index = data.current_frame_index or nil
+    data.current_frame_index = data.current_frame_index or nil
+    -- Make texture
+    local texture = Texture:New(data)
     -- Register virtual texture
     RedirectTexture(texture.name, texture.name)
     -- Register real textures
@@ -134,6 +148,10 @@ function Texture:Update()
     local frame_index = (frame_time % #self.frames) + 1
     -- Update texture
     self:SetTexture(frame_index)
+    -- Debug
+    if frame_time == 0 then
+        LibAnimatedTextures.Debug("updated %s", self.name)
+    end
 end
 
 function Texture:IsStatic()
@@ -153,58 +171,68 @@ function TexturePack:New(data)
     -- Create
     local texture_pack = ZO_Object.New(self)
     -- Attr
-    texture_pack.name = data.name or "<Anonymous Texture Pack>"
-    texture_pack.enabled = data.enabled or true
-    texture_pack.static_textures = data.static_textures or {}
-    texture_pack.animated_textures = data.animated_textures or {}
+    texture_pack.name = data.name
+    texture_pack.enabled = data.enabled
+    texture_pack.textures = data.textures
+    -- Return
+    return texture_pack
+end
+
+function TexturePack:Create(data)
+    -- Attr
+    data.name = data.name or "<Anonymous Texture Pack>"
+    data.enabled = data.enabled or true
+    data.textures = data.textures or {}
+    -- Make texture pack
+    local texture_pack = TexturePack:New(data)
     -- Return
     return texture_pack
 end
 
 function TexturePack:RegisterTexture(texture)
     -- Check not exist
-    if not (self.static_textures[texture.name] == nil and self.animated_textures[texture.name] == nil) then
+    if not self.textures[texture.name] == nil then
         return
     end
-    -- Categorise texture
-    if nil then
-    elseif texture:IsStatic() then
-        -- Static
-        self.static_textures[texture.name] = texture
-    elseif texture:IsAnimated() then
-        -- Animated
-        self.animated_textures[texture.name] = texture
-    else
-        -- Unknown
-        LibAnimatedTextures.Debug("Unknown texture type for %s", tostring(texture.name))
-    end
+    -- Save
+    self.textures[texture.name] = texture
 end
 
 function TexturePack:DeregisterTexture(texture)
     -- Check does exist
-    if (self.static_textures[texture.name] == nil or self.animated_textures[texture.name] == nil) then
+    if self.textures[texture.name] == nil then
         return
     end
     -- Unset texture
-    ZO_ClearTable(self.static_textures[texture.name] or {})
-    ZO_ClearTable(self.animated_textures[texture.name] or {})
+    ZO_ClearTable(self.textures[texture.name] or {})
     -- Set nil
-    self.static_textures[texture.name] = nil
-    self.animated_textures[texture.name] = nil
+    self.textures[texture.name] = nil
 end
 
 function TexturePack:FromTextures(name, textures)
-    -- Filter
-    -- local static_textures = filter(textures, function (texture) return texture:IsStatic() end)
-    -- local animated_textures = filter(textures, function (texture) return texture:IsAnimated() end)
     -- Create
-    local texture_pack = self:New({name = name})
+    local texture_pack = self:Create({name = name})
     -- Fill
     for texture_index, texture in ipairs(textures) do
         texture_pack:RegisterTexture(texture)
     end
     -- Return
     return texture_pack
+end
+
+function TexturePack:StaticTextures()
+    local static_textures = filter(self.textures, function (texture) return texture:IsStatic() end)
+    return static_textures
+end
+
+function TexturePack:AnimatedTextures()
+    local animated_textures = filter(self.textures, function (texture) return texture:IsAnimated() end)
+    return animated_textures
+end
+
+function TexturePack:AllTextures()
+    local all_textures = filter(self.textures, function (texture) return true end)
+    return all_textures
 end
 
 
@@ -214,7 +242,7 @@ function TexturePack:Update()
         return
     end
     -- Update
-    for texture_name, texture in pairs(self.animated_textures) do
+    for texture_name, texture in pairs(self.textures) do
         texture:Update()
     end
 end
@@ -255,6 +283,13 @@ function LibAnimatedTextures.DeregisterTexturePack(texture_pack)
     texture_packs[texture_pack.name] = nil
 end
 
+function LibAnimatedTextures.GetRegisteredTexturePacks()
+    LibAnimatedTextures.Message("Texture Packs")
+    for k, v in pairs(texture_packs) do
+        LibAnimatedTextures.Message("- %s", k)
+    end
+end
+
 function LibAnimatedTextures.UpdateTexturePacks()
     -- Loop texturepacks
     for texture_pack_name, texture_pack in pairs(texture_packs) do
@@ -284,7 +319,7 @@ end
 
 function LibAnimatedTextures.StartLoop()
     -- Debug
-    LibAnimatedTextures.Debug("Starting loop %s")
+    LibAnimatedTextures.Debug("Starting loop")
     -- Check loop not started
     if loop ~= nil then return end
     loop = true
