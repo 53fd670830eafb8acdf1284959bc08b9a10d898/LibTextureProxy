@@ -11,7 +11,7 @@ local LibAnimatedTextures = LibAnimatedTextures
 LibAnimatedTextures.default_saved_variables = {
     settings = {
         -- General
-        enabled = false,
+        animation_enabled = false,
         cooldown = 1,
         speed = 1,
         -- Debug
@@ -83,7 +83,7 @@ function Texture:New(data)
     local texture = ZO_Object.New(self)
     -- Attr
     texture.name = data.name
-    texture.enabled = data.enabled
+    texture.animation_enabled = data.animation_enabled
     texture.frames = data.frames
     texture.fps = data.fps
     texture.current_frame_index = data.current_frame_index
@@ -95,7 +95,7 @@ end
 function Texture:Create(data)
     -- Attrs
     data.name = data.name or "<Anonymous Emote>"
-    data.enabled = data.enabled or true
+    data.animation_enabled = data.animation_enabled or true
     data.frames = data.frames or {}
     -- FPS
     data.fps = data.fps or 24 -- Between 15 and 24, apparently
@@ -134,9 +134,9 @@ function Texture:SetTexture(frame_index)
     LibAnimatedTextures.Debug(string.format(" -> %s", frame_path))
 end
 
-function Texture:Update()
-    -- Check enabled
-    if self.enabled ~= true then
+function Texture:UpdateFrame()
+    -- Check animation enabled
+    if self.animation_enabled ~= true then
         return
     end
     -- Get raw frame time (1000 fps)
@@ -148,10 +148,6 @@ function Texture:Update()
     local frame_index = (frame_time % #self.frames) + 1
     -- Update texture
     self:SetTexture(frame_index)
-    -- Debug
-    if frame_time == 0 then
-        LibAnimatedTextures.Debug("updated %s", self.name)
-    end
 end
 
 function Texture:IsStatic()
@@ -172,7 +168,7 @@ function TexturePack:New(data)
     local texture_pack = ZO_Object.New(self)
     -- Attr
     texture_pack.name = data.name
-    texture_pack.enabled = data.enabled
+    texture_pack.animation_enabled = data.animation_enabled
     texture_pack.textures = data.textures
     -- Return
     return texture_pack
@@ -181,7 +177,7 @@ end
 function TexturePack:Create(data)
     -- Attr
     data.name = data.name or "<Anonymous Texture Pack>"
-    data.enabled = data.enabled or true
+    data.animation_enabled = data.animation_enabled or true
     data.textures = data.textures or {}
     -- Make texture pack
     local texture_pack = TexturePack:New(data)
@@ -236,14 +232,14 @@ function TexturePack:AllTextures()
 end
 
 
-function TexturePack:Update()
+function TexturePack:UpdateFrame()
     -- Check enabled
-    if self.enabled ~= true then
+    if self.animation_enabled ~= true then
         return
     end
     -- Update
     for texture_name, texture in pairs(self.textures) do
-        texture:Update()
+        texture:UpdateFrame()
     end
 end
 
@@ -290,56 +286,56 @@ function LibAnimatedTextures.GetRegisteredTexturePacks()
     end
 end
 
-function LibAnimatedTextures.UpdateTexturePacks()
+function LibAnimatedTextures.Animation()
     -- Loop texturepacks
     for texture_pack_name, texture_pack in pairs(texture_packs) do
-        texture_pack:Update()
+        texture_pack:UpdateFrame()
     end
     -- Update chat window
     LibAnimatedTextures.UpdateChatWindow()
 end
 
-function LibAnimatedTextures.Loop()
+function LibAnimatedTextures.AnimationLoop()
     -- Check enabled
-    if LibAnimatedTextures.saved_variables.settings.enabled ~= true then
+    if LibAnimatedTextures.saved_variables.settings.animation_enabled ~= true then
         -- Kill loop
         loop = nil
         return
     end
     -- Run
-    LibAnimatedTextures.UpdateTexturePacks()
+    LibAnimatedTextures.Animation()
     -- Loop
     zo_callLater(
         -- Recall
-        function() LibAnimatedTextures.Loop() end,
+        function() LibAnimatedTextures.AnimationLoop() end,
         -- Cooldown
         LibAnimatedTextures.saved_variables.settings.cooldown
     )
 end
 
-function LibAnimatedTextures.StartLoop()
+function LibAnimatedTextures.StartAnimationLoop()
     -- Debug
-    LibAnimatedTextures.Debug("Starting loop")
+    LibAnimatedTextures.Debug("Starting animation loop")
     -- Check loop not started
     if loop ~= nil then return end
     loop = true
     -- Start loop
-    LibAnimatedTextures.Loop()
+    LibAnimatedTextures.AnimationLoop()
 end
 
 
-function LibAnimatedTextures.SetEnabled(value)
+function LibAnimatedTextures.SetAnimationEnabled(value)
     -- Enable
     if value == true then
-        -- Set enabled
-        LibAnimatedTextures.saved_variables.settings.enabled = true
+        -- Set animation enabled
+        LibAnimatedTextures.saved_variables.settings.animation_enabled = true
         -- Start loop
-        LibAnimatedTextures.StartLoop()
+        LibAnimatedTextures.StartAnimationLoop()
     end
     -- Disable
     if value == false then
-        -- Set disabled
-        LibAnimatedTextures.saved_variables.settings.enabled = false
+        -- Set animation disabled
+        LibAnimatedTextures.saved_variables.settings.animation_enabled = false
     end     
 end
 
@@ -376,10 +372,10 @@ function LibAnimatedTextures.AddonMenu()
         },
         {
             type = "checkbox",
-            name = "Enabled",
-            getFunc = function() return LibAnimatedTextures.saved_variables.settings.enabled end,
-            setFunc = function(value) LibAnimatedTextures.SetEnabled(value) end,
-            default = LibAnimatedTextures.default_saved_variables.settings.enabled,
+            name = "Animation Enabled",
+            getFunc = function() return LibAnimatedTextures.saved_variables.settings.animation_enabled end,
+            setFunc = function(value) LibAnimatedTextures.SetAnimationEnabled(value) end,
+            default = LibAnimatedTextures.default_saved_variables.settings.animation_enabled,
         },
         {
             type = "slider",
@@ -425,7 +421,7 @@ function LibAnimatedTextures.Initialize()
     LibAnimatedTextures.SavedVariables()
     LibAnimatedTextures.AddonMenu()
     -- Start loop
-    LibAnimatedTextures.SetEnabled(LibAnimatedTextures.saved_variables.settings.enabled)
+    LibAnimatedTextures.SetAnimationEnabled(LibAnimatedTextures.saved_variables.settings.animation_enabled)
 end
 
 function LibAnimatedTextures.OnAddOnLoaded(event, addonName)
