@@ -98,10 +98,7 @@ function Texture:Create(data)
     data.animation_enabled = data.animation_enabled or true
     data.frames = data.frames or {}
     -- FPS
-    data.fps = data.fps or 24 -- Between 15 and 24, apparently
-    if (#data.frames == 2) then
-        data.fps = 4
-    end
+    data.fps = data.fps or #data.frames < 24 and #data.frames or 24 -- Between 15 and 24, apparently
     data.current_frame_index = data.current_frame_index or nil
     -- Make texture
     local texture = Texture:New(data)
