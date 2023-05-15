@@ -30,13 +30,26 @@ LibAnimatedTextures.values = {
 
 -- Helper
 
-local function filter(tbl, func)
+local function filter(func, tbl)
     -- Out
     local list = {};
     -- Loop
     for i, v in ipairs(tbl) do
       if func(v) then
         table.insert(list, v)
+      end
+    end
+    -- Return
+    return list
+end
+
+local function dict_filter(func, tbl)
+    -- Out
+    local list = {};
+    -- Loop
+    for k, v in pairs(tbl) do
+      if func(k, v) then
+        list[k] = v
       end
     end
     -- Return
@@ -214,17 +227,17 @@ function TexturePack:FromTextures(name, textures)
 end
 
 function TexturePack:StaticTextures()
-    local static_textures = filter(self.textures, function (texture) return texture:IsStatic() end)
+    local static_textures = dict_filter(function (texture_name, texture) return texture:IsStatic() end, self.textures)
     return static_textures
 end
 
 function TexturePack:AnimatedTextures()
-    local animated_textures = filter(self.textures, function (texture) return texture:IsAnimated() end)
+    local animated_textures = dict_filter(function (texture_name, texture) return texture:IsAnimated() end, self.textures)
     return animated_textures
 end
 
 function TexturePack:AllTextures()
-    local all_textures = filter(self.textures, function (texture) return true end)
+    local all_textures = dict_filter(function (texture_name, texture) return true end, self.textures)
     return all_textures
 end
 
@@ -235,7 +248,10 @@ function TexturePack:UpdateFrame()
         return
     end
     -- Update
-    for texture_name, texture in pairs(self.textures) do
+    for texture_name, texture in pairs(self:AnimatedTextures()) do
+        if ffots then
+            LibAnimatedTextures.Debug("Updating texture %s", texture_name)
+        end
         texture:UpdateFrame()
     end
 end
@@ -276,28 +292,36 @@ function LibAnimatedTextures.DeregisterTexturePack(texture_pack)
     texture_packs[texture_pack.name] = nil
 end
 
-function LibAnimatedTextures.GetRegisteredTexturePacks()
-    LibAnimatedTextures.Message("Texture Packs")
-    for k, v in pairs(texture_packs) do
-        LibAnimatedTextures.Message("- %s", k)
-    end
-end
-
 function LibAnimatedTextures.Animation()
     -- Loop texturepacks
     for texture_pack_name, texture_pack in pairs(texture_packs) do
+        if ffots then
+            LibAnimatedTextures.Debug("Updating texture pack %s", texture_pack_name)
+        end
         texture_pack:UpdateFrame()
     end
     -- Update chat window
     LibAnimatedTextures.UpdateChatWindow()
 end
 
+local last_update = 0
+local ffots = false
 function LibAnimatedTextures.AnimationLoop()
     -- Check enabled
     if LibAnimatedTextures.saved_variables.settings.animation_enabled ~= true then
         -- Kill loop
         loop = nil
         return
+    end
+    -- First frame of the second
+    local frame_time = GetFrameTimeMilliseconds()
+    ffots = 1000 < frame_time - last_update
+    if ffots == true then
+        last_update = frame_time - math.floor(frame_time % 1000)
+    end
+    -- Debug
+    if ffots then
+        LibAnimatedTextures.Debug("Updating textures")
     end
     -- Run
     LibAnimatedTextures.Animation()
