@@ -12,6 +12,7 @@ LibTextureProxy.default_saved_variables = {
     settings = {
         -- General
         animation_enabled = false,
+        chat_wiggle_enabled = true,
         cooldown = 1,
         speed = 1,
         -- Debug
@@ -266,6 +267,10 @@ local expand_window = true
 -- Functions
 
 function LibTextureProxy.UpdateChatWindow()
+    -- Check if chat wiggle enabled
+    if not LibTextureProxy.saved_variables.settings.chat_wiggle_enabled == true then
+        return
+    end
     -- Resize, it's bad but it works.
     local current_width = CHAT_SYSTEM.control:GetWidth()
     if expand_window == true then
@@ -397,6 +402,13 @@ function LibTextureProxy.AddonMenu()
             getFunc = function() return LibTextureProxy.saved_variables.settings.animation_enabled end,
             setFunc = function(value) LibTextureProxy.SetAnimationEnabled(value) end,
             default = LibTextureProxy.default_saved_variables.settings.animation_enabled,
+        },
+        {
+            type = "checkbox",
+            name = "Chat Wiggle Enabled",
+            getFunc = function() return LibTextureProxy.saved_variables.settings.chat_wiggle_enabled end,
+            setFunc = function(value) LibTextureProxy.saved_variables.settings.chat_wiggle_enabled = value end,
+            default = LibTextureProxy.default_saved_variables.settings.chat_wiggle_enabled,
         },
         {
             type = "slider",
