@@ -1,4 +1,4 @@
-## Title: |cFFA500LibAnimatedTextures|r
+## Title: |cFFA500LibTextureProxy|r
 ## Author: |cFFA500voidbiscuit|r
 ## APIVersion: 100033
 ## AddOnVersion: 1
@@ -6,10 +6,10 @@
 ## DependsOn: LibAddonMenu-2.0
 ## OptionalDependsOn:
 ## IsLibrary: true
-## SavedVariables: LibAnimatedTexturesSavedVariables
+## SavedVariables: LibTextureProxySavedVariables
 
 # Code
-LibAnimatedTextures.lua
+LibTextureProxy.lua
 
 # This Add-on is not created by, affiliated with, or sponsored by, ZeniMax Media Inc. or its affiliates.
 # The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States

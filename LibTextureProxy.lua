@@ -1,14 +1,14 @@
 -- Addon
-LibAnimatedTextures = {
-    ['Name'] = "LibAnimatedTextures",
+LibTextureProxy = {
+    ['Name'] = "LibTextureProxy",
     ['Author'] = "voidbiscuit",
     ['Version'] = "1.0",
     ['VariableVersion'] = 1,
     ['APIVersion'] = "101034",
 }
-local LibAnimatedTextures = LibAnimatedTextures
+local LibTextureProxy = LibTextureProxy
 
-LibAnimatedTextures.default_saved_variables = {
+LibTextureProxy.default_saved_variables = {
     settings = {
         -- General
         animation_enabled = false,
@@ -18,9 +18,9 @@ LibAnimatedTextures.default_saved_variables = {
         debug_enabled = false,
     }
 }
-LibAnimatedTextures.saved_variables = {}
+LibTextureProxy.saved_variables = {}
 
-LibAnimatedTextures.values = {
+LibTextureProxy.values = {
     colour = {
         addon = "|cFFA500",
         default = "|r",
@@ -57,7 +57,7 @@ local function dict_filter(func, tbl)
 end
 
 -- Debug
-function LibAnimatedTextures.Message(message, ...)
+function LibTextureProxy.Message(message, ...)
     if type(message) == type("") then
         -- Format
         message = string.format(message, ...)
@@ -66,9 +66,9 @@ function LibAnimatedTextures.Message(message, ...)
             -- Msg format
             "%s[%s]%s %s",
             -- Vals
-            LibAnimatedTextures.values.colour.addon, 
-            LibAnimatedTextures.Name, 
-            LibAnimatedTextures.values.colour.default, 
+            LibTextureProxy.values.colour.addon, 
+            LibTextureProxy.Name, 
+            LibTextureProxy.values.colour.default, 
             message
         ))
     else
@@ -76,11 +76,11 @@ function LibAnimatedTextures.Message(message, ...)
     end
 end
 
-function LibAnimatedTextures.Debug(message, ...)
+function LibTextureProxy.Debug(message, ...)
     -- Check enabled
-    if LibAnimatedTextures.saved_variables.settings.debug_enabled ~= true then return end
+    if LibTextureProxy.saved_variables.settings.debug_enabled ~= true then return end
     -- Call
-    LibAnimatedTextures.Message(message, ...)
+    LibTextureProxy.Message(message, ...)
 end
 
 -- Override
@@ -89,7 +89,7 @@ end
 
 -- - Texture
 local Texture = ZO_Object:Subclass()
-LibAnimatedTextures.Texture = Texture
+LibTextureProxy.Texture = Texture
 
 function Texture:New(data)
     -- Create
@@ -141,7 +141,7 @@ function Texture:SetTexture(frame_index)
     -- Redirect texture
     RedirectTexture(self.name, self.name)
     RedirectTexture(self.name, frame_path)
-    LibAnimatedTextures.Debug(string.format(" -> %s", frame_path))
+    LibTextureProxy.Debug(string.format(" -> %s", frame_path))
 end
 
 function Texture:UpdateFrame()
@@ -150,7 +150,7 @@ function Texture:UpdateFrame()
         return
     end
     -- Get raw frame time (1000 fps)
-    local frame_time = GetFrameTimeMilliseconds() * LibAnimatedTextures.saved_variables.settings.speed
+    local frame_time = GetFrameTimeMilliseconds() * LibTextureProxy.saved_variables.settings.speed
     -- Frame time modifier per texture
     frame_time = (frame_time * self.fps) / 1000
     frame_time = math.floor(frame_time)
@@ -171,7 +171,7 @@ end
 -- - Texture Pack
 
 local TexturePack = ZO_Object:Subclass()
-LibAnimatedTextures.TexturePack = TexturePack
+LibTextureProxy.TexturePack = TexturePack
 
 function TexturePack:New(data)
     -- Create
@@ -250,7 +250,7 @@ function TexturePack:UpdateFrame()
     -- Update
     for texture_name, texture in pairs(self:AnimatedTextures()) do
         if ffots then
-            LibAnimatedTextures.Debug("Updating texture %s", texture_name)
+            LibTextureProxy.Debug("Updating texture %s", texture_name)
         end
         texture:UpdateFrame()
     end
@@ -259,13 +259,13 @@ end
 -- Values
 
 local texture_packs = {}
-LibAnimatedTextures.texture_packs = texture_packs
+LibTextureProxy.texture_packs = texture_packs
 local loop = nil
 local expand_window = true
 
 -- Functions
 
-function LibAnimatedTextures.UpdateChatWindow()
+function LibTextureProxy.UpdateChatWindow()
     -- Resize, it's bad but it works.
     local current_width = CHAT_SYSTEM.control:GetWidth()
     if expand_window == true then
@@ -277,14 +277,14 @@ function LibAnimatedTextures.UpdateChatWindow()
     end
 end
 
-function LibAnimatedTextures.RegisterTexturePack(texture_pack)
+function LibTextureProxy.RegisterTexturePack(texture_pack)
     -- Check not exist
     if texture_packs[texture_pack.name] ~= nil then return end
     -- Set texture
     texture_packs[texture_pack.name] = texture_pack
 end
 
-function LibAnimatedTextures.DeregisterTexturePack(texture_pack)
+function LibTextureProxy.DeregisterTexturePack(texture_pack)
     -- Check does exist
     if texture_packs[texture_pack.name] == nil then return end
     -- Unset texture
@@ -292,23 +292,23 @@ function LibAnimatedTextures.DeregisterTexturePack(texture_pack)
     texture_packs[texture_pack.name] = nil
 end
 
-function LibAnimatedTextures.Animation()
+function LibTextureProxy.Animation()
     -- Loop texturepacks
     for texture_pack_name, texture_pack in pairs(texture_packs) do
         if ffots then
-            LibAnimatedTextures.Debug("Updating texture pack %s", texture_pack_name)
+            LibTextureProxy.Debug("Updating texture pack %s", texture_pack_name)
         end
         texture_pack:UpdateFrame()
     end
     -- Update chat window
-    LibAnimatedTextures.UpdateChatWindow()
+    LibTextureProxy.UpdateChatWindow()
 end
 
 local last_update = 0
 local ffots = false
-function LibAnimatedTextures.AnimationLoop()
+function LibTextureProxy.AnimationLoop()
     -- Check enabled
-    if LibAnimatedTextures.saved_variables.settings.animation_enabled ~= true then
+    if LibTextureProxy.saved_variables.settings.animation_enabled ~= true then
         -- Kill loop
         loop = nil
         return
@@ -321,68 +321,68 @@ function LibAnimatedTextures.AnimationLoop()
     end
     -- Debug
     if ffots then
-        LibAnimatedTextures.Debug("Updating textures")
+        LibTextureProxy.Debug("Updating textures")
     end
     -- Run
-    LibAnimatedTextures.Animation()
+    LibTextureProxy.Animation()
     -- Loop
     zo_callLater(
         -- Recall
-        function() LibAnimatedTextures.AnimationLoop() end,
+        function() LibTextureProxy.AnimationLoop() end,
         -- Cooldown
-        LibAnimatedTextures.saved_variables.settings.cooldown
+        LibTextureProxy.saved_variables.settings.cooldown
     )
 end
 
-function LibAnimatedTextures.StartAnimationLoop()
+function LibTextureProxy.StartAnimationLoop()
     -- Debug
-    LibAnimatedTextures.Debug("Starting animation loop")
+    LibTextureProxy.Debug("Starting animation loop")
     -- Check loop not started
     if loop ~= nil then return end
     loop = true
     -- Start loop
-    LibAnimatedTextures.AnimationLoop()
+    LibTextureProxy.AnimationLoop()
 end
 
 
-function LibAnimatedTextures.SetAnimationEnabled(value)
+function LibTextureProxy.SetAnimationEnabled(value)
     -- Enable
     if value == true then
         -- Set animation enabled
-        LibAnimatedTextures.saved_variables.settings.animation_enabled = true
+        LibTextureProxy.saved_variables.settings.animation_enabled = true
         -- Start loop
-        LibAnimatedTextures.StartAnimationLoop()
+        LibTextureProxy.StartAnimationLoop()
     end
     -- Disable
     if value == false then
         -- Set animation disabled
-        LibAnimatedTextures.saved_variables.settings.animation_enabled = false
+        LibTextureProxy.saved_variables.settings.animation_enabled = false
     end     
 end
 
 -- Addon Config
 
 -- Saved vars
-function LibAnimatedTextures.SavedVariables()
+function LibTextureProxy.SavedVariables()
     -- Saved Variables
-    LibAnimatedTextures.saved_variables = ZO_SavedVars:NewAccountWide(
-        LibAnimatedTextures.Name .. "SavedVariables", 
-        LibAnimatedTextures.VariableVersion, 
+    LibTextureProxy.saved_variables = ZO_SavedVars:NewAccountWide(
+        LibTextureProxy.Name .. "SavedVariables", 
+        LibTextureProxy.VariableVersion, 
         nil, 
-        LibAnimatedTextures.default_saved_variables, 
+        LibTextureProxy.default_saved_variables, 
         GetWorldName()
     )
 end
 
 -- Menu
-function LibAnimatedTextures.AddonMenu()
+function LibTextureProxy.AddonMenu()
     -- Addon Menu
     local LAM = LibAddonMenu2
-    local panel_name = LibAnimatedTextures.Name .. "SettingsPanel"
+    local panel_name = LibTextureProxy.Name .. "SettingsPanel"
     local panel_data = {
         type = "panel",
-        name = LibAnimatedTextures.Name,
-        author = LibAnimatedTextures.Author
+        name = LibTextureProxy.Name,
+        author = LibTextureProxy.Author
     }
     local panel = LAM:RegisterAddonPanel(panel_name, panel_data)
     local options_data = {
@@ -394,16 +394,16 @@ function LibAnimatedTextures.AddonMenu()
         {
             type = "checkbox",
             name = "Animation Enabled",
-            getFunc = function() return LibAnimatedTextures.saved_variables.settings.animation_enabled end,
-            setFunc = function(value) LibAnimatedTextures.SetAnimationEnabled(value) end,
-            default = LibAnimatedTextures.default_saved_variables.settings.animation_enabled,
+            getFunc = function() return LibTextureProxy.saved_variables.settings.animation_enabled end,
+            setFunc = function(value) LibTextureProxy.SetAnimationEnabled(value) end,
+            default = LibTextureProxy.default_saved_variables.settings.animation_enabled,
         },
         {
             type = "slider",
             name = "Cooldown",
-            getFunc = function() return LibAnimatedTextures.saved_variables.settings.cooldown end,
-            setFunc = function(value) LibAnimatedTextures.saved_variables.settings.cooldown = value end,
-            default = LibAnimatedTextures.default_saved_variables.settings.cooldown,
+            getFunc = function() return LibTextureProxy.saved_variables.settings.cooldown end,
+            setFunc = function(value) LibTextureProxy.saved_variables.settings.cooldown = value end,
+            default = LibTextureProxy.default_saved_variables.settings.cooldown,
             min = 1,
             max = 1000,
             step = 1,
@@ -411,9 +411,9 @@ function LibAnimatedTextures.AddonMenu()
         {
             type = "slider",
             name = "Speed",
-            getFunc = function() return LibAnimatedTextures.saved_variables.settings.speed end,
-            setFunc = function(value) LibAnimatedTextures.saved_variables.settings.speed = value end,
-            default = LibAnimatedTextures.default_saved_variables.settings.speed,
+            getFunc = function() return LibTextureProxy.saved_variables.settings.speed end,
+            setFunc = function(value) LibTextureProxy.saved_variables.settings.speed = value end,
+            default = LibTextureProxy.default_saved_variables.settings.speed,
             min = 0,
             max = 5,
             step = 0.01,
@@ -426,29 +426,29 @@ function LibAnimatedTextures.AddonMenu()
         {
             type = "checkbox",
             name = "Enabled",
-            getFunc = function() return LibAnimatedTextures.saved_variables.settings.debug_enabled end,
-            setFunc = function(value) LibAnimatedTextures.saved_variables.settings.debug_enabled = value end,
-            default = LibAnimatedTextures.default_saved_variables.settings.debug_enabled,
+            getFunc = function() return LibTextureProxy.saved_variables.settings.debug_enabled end,
+            setFunc = function(value) LibTextureProxy.saved_variables.settings.debug_enabled = value end,
+            default = LibTextureProxy.default_saved_variables.settings.debug_enabled,
         },
     }
     LAM:RegisterOptionControls(panel_name, options_data)
 end
 
 -- Addon Load
-function LibAnimatedTextures.Initialize()
+function LibTextureProxy.Initialize()
     -- Unregister
-    EVENT_MANAGER:UnregisterForEvent(LibAnimatedTextures.Name, EVENT_ADD_ON_LOADED)
+    EVENT_MANAGER:UnregisterForEvent(LibTextureProxy.Name, EVENT_ADD_ON_LOADED)
     -- Init
-    LibAnimatedTextures.SavedVariables()
-    LibAnimatedTextures.AddonMenu()
+    LibTextureProxy.SavedVariables()
+    LibTextureProxy.AddonMenu()
     -- Start loop
-    LibAnimatedTextures.SetAnimationEnabled(LibAnimatedTextures.saved_variables.settings.animation_enabled)
+    LibTextureProxy.SetAnimationEnabled(LibTextureProxy.saved_variables.settings.animation_enabled)
 end
 
-function LibAnimatedTextures.OnAddOnLoaded(event, addonName)
-    if addonName == LibAnimatedTextures.Name then
-        LibAnimatedTextures.Initialize()
+function LibTextureProxy.OnAddOnLoaded(event, addonName)
+    if addonName == LibTextureProxy.Name then
+        LibTextureProxy.Initialize()
     end
 end
 
-EVENT_MANAGER:RegisterForEvent(LibAnimatedTextures.Name, EVENT_ADD_ON_LOADED, LibAnimatedTextures.OnAddOnLoaded)
+EVENT_MANAGER:RegisterForEvent(LibTextureProxy.Name, EVENT_ADD_ON_LOADED, LibTextureProxy.OnAddOnLoaded)
