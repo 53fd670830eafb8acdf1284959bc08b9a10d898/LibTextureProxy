@@ -6,7 +6,7 @@ LibTextureProxy = LibTextureProxy or {
     ['Author'] = "{{author}}",
     ['APIVersion'] = "{{api_version}}",
     ['Version'] = "{{addon_version}}",
-    ['VariableVersion'] = "{{version}}",
+    ['VariableVersion'] = 1,
 }
 local LibTextureProxy = LibTextureProxy
 
