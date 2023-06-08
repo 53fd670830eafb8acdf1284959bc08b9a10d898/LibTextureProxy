@@ -1,13 +1,16 @@
--- Addon
-LibTextureProxy = {
-    ['Name'] = "LibTextureProxy",
-    ['Author'] = "voidbiscuit",
-    ['Version'] = "1.0",
-    ['VariableVersion'] = 1,
-    ['APIVersion'] = "101034",
+
+
+LibTextureProxy = LibTextureProxy or {
+    ['Name'] = "{{name}}",
+    ['Description'] = "{{description}}",
+    ['Author'] = "{{author}}",
+    ['APIVersion'] = "{{api_version}}",
+    ['Version'] = "{{addon_version}}",
+    ['VariableVersion'] = "{{version}}",
 }
 local LibTextureProxy = LibTextureProxy
 
+-- Saved variables
 LibTextureProxy.default_saved_variables = {
     settings = {
         -- General
@@ -457,9 +460,11 @@ function LibTextureProxy.Initialize()
     LibTextureProxy.SetAnimationEnabled(LibTextureProxy.saved_variables.settings.animation_enabled)
 end
 
+LibTextureProxy.initialised = false
 function LibTextureProxy.OnAddOnLoaded(event, addonName)
     if addonName == LibTextureProxy.Name then
         LibTextureProxy.Initialize()
+        LibTextureProxy.initialised = true
     end
 end
 

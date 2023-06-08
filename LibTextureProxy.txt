@@ -1,16 +1,17 @@
-## Title: |cFFA500LibTextureProxy|r
-## Author: |cFFA500voidbiscuit|r
-## APIVersion: 100033
-## AddOnVersion: 1
-## Version: 0.0.1
+; This Add-on is not created by, affiliated with, or sponsored by, ZeniMax Media Inc. or its affiliates.
+; The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States
+; and/or other countries. All rights reserved.
+
+## Title: {{decorated_name}}
+## Description: {{description}}
+## Author: {{decorated_author}}
+## APIVersion: {{api_version}}
+## AddOnVersion: {{addon_version}}
+## Version: {{version}}
 ## DependsOn: LibAddonMenu-2.0
 ## OptionalDependsOn:
 ## IsLibrary: true
 ## SavedVariables: LibTextureProxySavedVariables
 
-# Code
+; Imports
 LibTextureProxy.lua
-
-# This Add-on is not created by, affiliated with, or sponsored by, ZeniMax Media Inc. or its affiliates.
-# The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States
-# and/or other countries. All rights reserved.
