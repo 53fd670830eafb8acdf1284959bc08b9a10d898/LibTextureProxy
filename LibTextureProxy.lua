@@ -32,6 +32,9 @@ LibTextureProxy.values = {
     },
 }
 
+
+local ffots = false
+
 -- Helper
 
 local function filter(func, tbl)
@@ -313,7 +316,6 @@ function LibTextureProxy.Animation()
 end
 
 local last_update = 0
-local ffots = false
 function LibTextureProxy.AnimationLoop()
     -- Check enabled
     if LibTextureProxy.saved_variables.settings.animation_enabled ~= true then
@@ -433,17 +435,6 @@ function LibTextureProxy.AddonMenu()
             max = 5,
             step = 0.01,
             decimals=2
-        },
-        {
-            type = "header",
-            name = "Debug",
-        },
-        {
-            type = "checkbox",
-            name = "Enabled",
-            getFunc = function() return LibTextureProxy.saved_variables.settings.debug_enabled end,
-            setFunc = function(value) LibTextureProxy.saved_variables.settings.debug_enabled = value end,
-            default = LibTextureProxy.default_saved_variables.settings.debug_enabled,
         },
     }
     LAM:RegisterOptionControls(panel_name, options_data)
